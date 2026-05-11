@@ -208,3 +208,17 @@ th {
   border-radius: 8px;
   margin-bottom: 16px;
 }
+
+.delete-button {
+  background: darkred;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.delete-button:hover,
+.delete-button:focus {
+  background: red;
+}

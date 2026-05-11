@@ -1,5 +1,5 @@
 type Interest = {
-  id: number;
+  id: number | string;
   name: string;
   email: string;
   programme: string;
@@ -12,6 +12,11 @@ export function adminView(interests: Interest[]): string {
       <td>${interest.name}</td>
       <td>${interest.email}</td>
       <td>${interest.programme}</td>
+      <td>
+        <a class="delete-button" href="/admin/delete-interest/${interest.id}">
+          Delete
+        </a>
+      </td>
     </tr>
   `).join("");
 
@@ -27,13 +32,14 @@ export function adminView(interests: Interest[]): string {
             <th>Student Name</th>
             <th>Email</th>
             <th>Programme</th>
+            <th>Action</th>
           </tr>
         </thead>
 
         <tbody>
           ${rows || `
             <tr>
-              <td colspan="4">No interested students yet.</td>
+              <td colspan="5">No interested students yet.</td>
             </tr>
           `}
         </tbody>

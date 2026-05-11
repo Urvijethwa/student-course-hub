@@ -1,4 +1,4 @@
-import { DB } from "../deps.ts";
+import { DB } from "https://deno.land/x/sqlite/mod.ts";
 
 export const db = new DB("student_course_hub.db");
 

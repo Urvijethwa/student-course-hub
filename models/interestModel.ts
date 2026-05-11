@@ -10,3 +10,7 @@ export function addInterest(name: string, email: string, programme: string) {
 export function getAllInterests() {
   return db.queryEntries("SELECT * FROM interests ORDER BY id DESC");
 }
+
+export function deleteInterest(id: string) {
+  db.query("DELETE FROM interests WHERE id = ?", [id]);
+}
