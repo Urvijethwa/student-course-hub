@@ -30,3 +30,12 @@ if (existingUser.length === 0) {
     ["admin", "admin123"]
   );
 }
+
+db.execute(`
+  CREATE TABLE IF NOT EXISTS programmes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    level TEXT NOT NULL,
+    description TEXT NOT NULL
+  )
+`);

@@ -5,7 +5,7 @@ type Interest = {
   programme: string;
 };
 
-export function adminView(interests: Interest[]): string {
+export function adminView(interests: any[]): string {
   const rows = interests.map((interest) => `
     <tr>
       <td>${interest.id}</td>

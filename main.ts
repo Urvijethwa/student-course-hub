@@ -7,8 +7,8 @@ import { programmeDetailsView } from "./views/programmeDetailsView.ts";
 import { registerInterestView } from "./views/registerInterestView.ts";
 import { adminView } from "./views/adminView.ts";
 import { loginView } from "./views/loginView.ts";
+import { adminProgrammeView } from "./views/adminProgrammeView.ts";
 
-//delete interest
 import {
   addInterest,
   getAllInterests,
@@ -16,6 +16,12 @@ import {
 } from "./models/interestModel.ts";
 
 import { findUser } from "./models/userModel.ts";
+
+import {
+  getAllProgrammes,
+  addProgramme,
+  deleteProgramme,
+} from "./models/programmeModel.ts";
 
 Deno.serve(async (request: Request) => {
   const url = new URL(request.url);
@@ -51,9 +57,7 @@ Deno.serve(async (request: Request) => {
 
   // REGISTER INTEREST PAGE
   if (pathname === "/register-interest" && request.method === "GET") {
-    return htmlResponse(
-      layout("Register Interest", registerInterestView())
-    );
+    return htmlResponse(layout("Register Interest", registerInterestView()));
   }
 
   // REGISTER INTEREST FORM
@@ -107,10 +111,7 @@ Deno.serve(async (request: Request) => {
 
     if (!user || user.password !== password) {
       return htmlResponse(
-        layout(
-          "Login Failed",
-          loginView("Invalid username or password")
-        )
+        layout("Login Failed", loginView("Invalid username or password"))
       );
     }
 
@@ -120,35 +121,75 @@ Deno.serve(async (request: Request) => {
     );
   }
 
+  // DELETE INTEREST
   if (pathname.startsWith("/admin/delete-interest/")) {
-  const cookie = request.headers.get("cookie");
+    if (!isAdmin(request)) {
+      return redirect("/login");
+    }
 
-  if (!cookie?.includes("admin=")) {
-    return redirect("/login");
+    const id = pathname.split("/").pop();
+
+    if (id) {
+      deleteInterest(id);
+    }
+
+    return redirect("/admin");
   }
 
-  const id = pathname.split("/").pop();
-
-  if (id) {
-    deleteInterest(id);
-  }
-
-  return redirect("/admin");
-}
-
-  // ADMIN PAGE
+  // ADMIN DASHBOARD
   if (pathname === "/admin") {
-    const cookie = request.headers.get("cookie");
-
-    if (!cookie?.includes("admin=")) {
+    if (!isAdmin(request)) {
       return redirect("/login");
     }
 
     const interests = getAllInterests();
 
+    return htmlResponse(layout("Admin Dashboard", adminView(interests)));
+  }
+
+  // ADMIN MANAGE PROGRAMMES PAGE
+  if (pathname === "/admin/programmes" && request.method === "GET") {
+    if (!isAdmin(request)) {
+      return redirect("/login");
+    }
+
+    const programmes = getAllProgrammes();
+
     return htmlResponse(
-      layout("Admin Dashboard", adminView(interests))
+      layout("Manage Programmes", adminProgrammeView(programmes))
     );
+  }
+
+  // ADD PROGRAMME
+  if (pathname === "/admin/programmes" && request.method === "POST") {
+    if (!isAdmin(request)) {
+      return redirect("/login");
+    }
+
+    const formData = await request.formData();
+
+    const title = String(formData.get("title"));
+    const level = String(formData.get("level"));
+    const description = String(formData.get("description"));
+
+    addProgramme(title, level, description);
+
+    return redirect("/admin/programmes");
+  }
+
+  // DELETE PROGRAMME
+  if (pathname.startsWith("/admin/delete-programme/")) {
+    if (!isAdmin(request)) {
+      return redirect("/login");
+    }
+
+    const id = pathname.split("/").pop();
+
+    if (id) {
+      deleteProgramme(id);
+    }
+
+    return redirect("/admin/programmes");
   }
 
   // LOGOUT
@@ -201,4 +242,9 @@ function redirectWithCookie(location: string, cookie: string): Response {
       "Set-Cookie": cookie,
     },
   });
+}
+
+function isAdmin(request: Request): boolean {
+  const cookie = request.headers.get("cookie");
+  return cookie?.includes("admin=") || false;
 }
