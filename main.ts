@@ -3,11 +3,11 @@ import "./db/database.ts";
 import { layout } from "./views/layout.ts";
 import { homeView } from "./views/homeView.ts";
 import { programmesView } from "./views/programmesView.ts";
-import { programmeDetailsView } from "./views/programmeDetailsView.ts";
 import { registerInterestView } from "./views/registerInterestView.ts";
 import { adminView } from "./views/adminView.ts";
 import { loginView } from "./views/loginView.ts";
 import { adminProgrammeView } from "./views/adminProgrammeView.ts";
+import { editProgrammeView } from "./views/editProgrammeView.ts";
 
 import {
   addInterest,
@@ -21,6 +21,8 @@ import {
   getAllProgrammes,
   addProgramme,
   deleteProgramme,
+  getProgrammeById,
+  updateProgramme,
 } from "./models/programmeModel.ts";
 
 Deno.serve(async (request: Request) => {
@@ -43,15 +45,85 @@ Deno.serve(async (request: Request) => {
     return htmlResponse(layout("Student Course Hub", homeView()));
   }
 
-  // PROGRAMMES
+  // PUBLIC PROGRAMMES PAGE
   if (pathname === "/programmes") {
-    return htmlResponse(layout("Programmes", programmesView()));
+    const programmes = getAllProgrammes();
+
+    return htmlResponse(
+      layout("Programmes", programmesView(programmes))
+    );
   }
 
-  // PROGRAMME DETAILS
-  if (pathname === "/programmes/computer-science") {
+  // DYNAMIC PROGRAMME DETAILS PAGE
+  if (pathname.startsWith("/programmes/")) {
+    const id = pathname.split("/").pop();
+
+    if (!id) {
+      return redirect("/programmes");
+    }
+
+    const programme = getProgrammeById(id);
+
+    if (!programme) {
+      return htmlResponse(
+        layout(
+          "Programme Not Found",
+          `
+          <section class="form-card">
+            <h2>Programme Not Found</h2>
+            <p>This programme does not exist.</p>
+            <a class="button" href="/programmes">Back to Programmes</a>
+          </section>
+          `
+        ),
+        404
+      );
+    }
+
     return htmlResponse(
-      layout("BSc Computer Science", programmeDetailsView())
+      layout(
+        String(programme.title),
+        `
+        <section class="details">
+          <h2>${programme.title}</h2>
+          <p class="tag">${programme.level}</p>
+          <p>${programme.description}</p>
+
+          <h3>Modules by Year</h3>
+
+          <div class="module-list">
+            <article class="card">
+              <h4>Year 1</h4>
+              <ul>
+                <li>Programming Fundamentals</li>
+                <li>Computer Systems</li>
+                <li>Academic Skills</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h4>Year 2</h4>
+              <ul>
+                <li>Web Application Development</li>
+                <li>Databases</li>
+                <li>Software Engineering</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h4>Year 3</h4>
+              <ul>
+                <li>Advanced Web Development</li>
+                <li>Final Year Project</li>
+                <li>Professional Practice</li>
+              </ul>
+            </article>
+          </div>
+
+          <a class="button" href="/register-interest">Register Interest</a>
+        </section>
+        `
+      )
     );
   }
 
@@ -69,12 +141,6 @@ Deno.serve(async (request: Request) => {
     const programme = String(formData.get("programme"));
 
     addInterest(name, email, programme);
-
-    console.log("New interest saved:", {
-      name,
-      email,
-      programme,
-    });
 
     return redirect("/register-interest-success");
   }
@@ -199,6 +265,52 @@ Deno.serve(async (request: Request) => {
       "admin=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax"
     );
   }
+
+  // EDIT PROGRAMME PAGE
+if (pathname.startsWith("/admin/edit-programme/") && request.method === "GET") {
+  if (!isAdmin(request)) {
+    return redirect("/login");
+  }
+
+  const id = pathname.split("/").pop();
+
+  if (!id) {
+    return redirect("/admin/programmes");
+  }
+
+  const programme = getProgrammeById(id);
+
+  if (!programme) {
+    return redirect("/admin/programmes");
+  }
+
+  return htmlResponse(
+    layout("Edit Programme", editProgrammeView(programme))
+  );
+}
+
+// UPDATE PROGRAMME
+if (pathname.startsWith("/admin/edit-programme/") && request.method === "POST") {
+  if (!isAdmin(request)) {
+    return redirect("/login");
+  }
+
+  const id = pathname.split("/").pop();
+
+  if (!id) {
+    return redirect("/admin/programmes");
+  }
+
+  const formData = await request.formData();
+
+  const title = String(formData.get("title"));
+  const level = String(formData.get("level"));
+  const description = String(formData.get("description"));
+
+  updateProgramme(id, title, level, description);
+
+  return redirect("/admin/programmes");
+}
 
   // 404 PAGE
   return htmlResponse(

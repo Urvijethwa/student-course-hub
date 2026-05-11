@@ -18,3 +18,24 @@ export function addProgramme(
 export function deleteProgramme(id: string) {
   db.query("DELETE FROM programmes WHERE id = ?", [id]);
 }
+
+export function getProgrammeById(id: string) {
+  const programmes = db.queryEntries(
+    "SELECT * FROM programmes WHERE id = ?",
+    [id],
+  );
+
+  return programmes[0];
+}
+
+export function updateProgramme(
+  id: string,
+  title: string,
+  level: string,
+  description: string,
+) {
+  db.query(
+    "UPDATE programmes SET title = ?, level = ?, description = ? WHERE id = ?",
+    [title, level, description, id],
+  );
+}

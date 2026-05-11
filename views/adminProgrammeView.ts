@@ -9,6 +9,10 @@ export function adminProgrammeView(programmes: any[]): string {
         <a class="delete-button" href="/admin/delete-programme/${programme.id}">
           Delete
         </a>
+
+        <a class="button small-button" href="/admin/edit-programme/${programme.id}">
+         Edit
+        </a>
       </td>
     </tr>
   `).join("");
